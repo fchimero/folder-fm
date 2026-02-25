@@ -138,6 +138,25 @@
     line-height: 1.8;
   }
 
+  .pick-dir-btn {
+    margin-top: 0.5rem;
+    padding: 0.55rem 1.4rem;
+    background: none;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--font-base);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pick-dir-btn:hover, .pick-dir-btn:focus-visible {
+    background: var(--accent);
+    color: #0a0a0a;
+    outline: none;
+  }
+
   /* ── Albums grid ── */
   #albums-grid {
     display: none;
@@ -614,8 +633,9 @@
 <main>
   <div id="empty-state">
     <div class="empty-icon">◉</div>
-    <div class="empty-title">No library loaded</div>
+    <div class="empty-title">No directory loaded</div>
     <div class="empty-sub">Open a folder containing your music.</div>
+    <button class="pick-dir-btn" id="pick-dir-btn">Pick Directory</button>
   </div>
 
   <div id="scan-state">
@@ -833,6 +853,7 @@ async function openFolder() {
 }
 
 document.getElementById('open-folder-btn').addEventListener('click', openFolder);
+document.getElementById('pick-dir-btn').addEventListener('click', openFolder);
 
 // ════════════════════════════════════════════════
 // On load: restore saved directory handle if available
