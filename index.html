@@ -6,15 +6,13 @@
 <meta name="theme-color" content="#0a0a0a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="VINYL">
+<meta name="apple-mobile-web-app-title" content="Folder.fm">
 <meta name="description" content="An album-first local music player">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.svg">
 <title></title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@450&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
@@ -678,7 +676,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
-        console.log('[VINYL] SW registered:', reg.scope);
+        console.log('[Folder.fm] SW registered:', reg.scope);
         // Prompt user to refresh when new SW is waiting
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
@@ -690,7 +688,7 @@ if ('serviceWorker' in navigator) {
           });
         });
       })
-      .catch(err => console.warn('[VINYL] SW registration failed:', err));
+      .catch(err => console.warn('[Folder.fm] SW registration failed:', err));
   });
 }
 

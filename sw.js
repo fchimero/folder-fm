@@ -1,5 +1,5 @@
-// VINYL PWA — Service Worker
-const CACHE_NAME = 'vinyl-v1';
+// Folder.fm PWA — Service Worker
+const CACHE_NAME = 'folder-fm-v1';
 
 // App shell files to cache on install
 const SHELL = [
@@ -9,7 +9,6 @@ const SHELL = [
   './icon-512.svg',
   // External resources (cached on first fetch)
   'https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js',
-  'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap',
 ];
 
 // ── Install: cache the app shell ──────────────────────────────────────────────
@@ -48,9 +47,7 @@ self.addEventListener('fetch', event => {
       return fetch(request).then(response => {
         // Cache successful responses for shell resources
         if (response.ok && (
-          request.url.includes('jsmediatags') ||
-          request.url.includes('fonts.googleapis') ||
-          request.url.includes('fonts.gstatic')
+          request.url.includes('jsmediatags')
         )) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
