@@ -587,6 +587,17 @@
     animation: fadeUp 0.3s both;
   }
   #offline-toast.show { display: block; }
+  .text-btn {
+    background: none;
+    border: none;
+    color: var(--fg);
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .text-btn:hover { opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -604,7 +615,7 @@
   <div id="empty-state">
     <div class="empty-icon">◉</div>
     <div class="empty-title">No library loaded</div>
-    <div class="empty-sub">Open a folder containing your music to get started</div>
+    <div class="empty-sub">Open a folder containing your music.</div>
   </div>
 
   <div id="scan-state">
@@ -753,20 +764,43 @@ const scanEl   = document.getElementById('scan-state');
 const scanCnt  = document.getElementById('scan-count');
 
 // ════════════════════════════════════════════════
-// Directory persistence (localStorage)
+// Directory persistence (IndexedDB)
 // ════════════════════════════════════════════════
-// We store the directory name as a hint. On load we check if a name is saved
-// and prompt the user to re-grant access (File System Access API requires a
-// fresh user gesture each session for security — we can't store the handle
-// itself, but we can prompt immediately with the saved name as context).
-const DIR_KEY = 'vinyl_last_dir';
+// FileSystemDirectoryHandle objects are serializable via structured clone,
+// so they can be stored in IndexedDB and restored across sessions. On reload
+// we check queryPermission() — if already granted we auto-scan; if not we
+// show a one-tap prompt that calls requestPermission() before scanning.
+const DB_NAME  = 'folder-fm-db';
+const DB_STORE = 'handles';
+const DB_KEY   = 'last-dir';
 
-function saveLastDir(name) {
-  try { localStorage.setItem(DIR_KEY, name); } catch(e) {}
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(DB_STORE);
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
 }
 
-function getLastDir() {
-  try { return localStorage.getItem(DIR_KEY); } catch(e) { return null; }
+async function saveDirHandle(handle) {
+  try {
+    const db = await openDb();
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(handle, DB_KEY);
+  } catch(e) {}
+}
+
+async function loadDirHandle() {
+  try {
+    const db = await openDb();
+    return await new Promise((resolve, reject) => {
+      const tx  = db.transaction(DB_STORE, 'readonly');
+      const req = tx.objectStore(DB_STORE).get(DB_KEY);
+      req.onsuccess = e => resolve(e.target.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  } catch(e) { return null; }
 }
 
 // ════════════════════════════════════════════════
@@ -781,8 +815,8 @@ async function openFolder() {
   try { dirHandle = await window.showDirectoryPicker({ mode: 'read' }); }
   catch(e) { return; } // user cancelled
 
-  // Save directory name for next session
-  saveLastDir(dirHandle.name);
+  // Save handle for next session
+  saveDirHandle(dirHandle);
 
   albums = {};
   gridEl.innerHTML = '';
@@ -801,14 +835,38 @@ async function openFolder() {
 document.getElementById('open-folder-btn').addEventListener('click', openFolder);
 
 // ════════════════════════════════════════════════
-// On load: if we have a saved directory, show a prompt to re-open it
+// On load: restore saved directory handle if available
 // ════════════════════════════════════════════════
-window.addEventListener('load', () => {
-  const lastName = getLastDir();
-  if (lastName) {
-    // Update the empty state text to hint at the last directory
+window.addEventListener('load', async () => {
+  const handle = await loadDirHandle();
+  if (!handle) return;
+
+  const perm = await handle.queryPermission({ mode: 'read' });
+
+  if (perm === 'granted') {
+    // Permission already granted — auto-scan without any user interaction
+    scanEl.style.display = 'flex';
+    emptyEl.style.display = 'none';
+    scanCnt.textContent = '0';
+    playerEl.classList.add('idle');
+    await scanDir(handle);
+    renderAlbums();
+  } else {
+    // Need a user gesture to re-grant — show a one-tap reload button
     const subEl = document.querySelector('.empty-sub');
-    if (subEl) subEl.textContent = `Last opened: "${lastName}". Open the folder again to load your library.`;
+    if (subEl) subEl.innerHTML =
+      `Last opened: <strong>${handle.name}</strong>. ` +
+      `<button id="reload-dir-btn" class="text-btn">Reload library</button>`;
+    document.getElementById('reload-dir-btn')?.addEventListener('click', async () => {
+      const granted = await handle.requestPermission({ mode: 'read' });
+      if (granted !== 'granted') return;
+      emptyEl.style.display = 'none';
+      scanEl.style.display = 'flex';
+      scanCnt.textContent = '0';
+      playerEl.classList.add('idle');
+      await scanDir(handle);
+      renderAlbums();
+    });
   }
 });
 
