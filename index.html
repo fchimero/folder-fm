@@ -23,6 +23,8 @@
     --text: #eee;
     --muted: #777;
     --accent: #eee;
+    --font-body: system-ui, sans-serif;
+    --font-title: system-ui, sans-serif;
     --player-h: 64px;
     --font-base: 12px;
     --font-sm: 11px;
@@ -37,10 +39,11 @@
     height: 100%;
     background: var(--bg);
     color: var(--text);
-    font-family: system-ui, sans-serif;
+    font-family: var(--font-body);
     overflow-x: hidden;
     /* Prevent overscroll bounce on iOS */
     overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* open-btn still used inside player empty state */
@@ -218,20 +221,20 @@
   /* .album-card.playing .album-overlay { opacity: 1; } */
 
   .play-icon {
-    width: 40px;
-    height: 40px;
-    /* border: 2px solid var(--accent); */
-    background-color: rgba(50,50,50,0.9);
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--accent);
+    color: var(--text);
     margin-right: 0.5rem;
     margin-bottom: 0.5rem;
+    background-color: rgba(22,22,22, 0.8); /* Semi-transparent white */
+    border: 0.5px solid rgba(255, 255, 255, 0.1); /* Subtle edge */
   }
 
-  .play-icon svg { margin-top: 3px; }
+  .play-icon svg { margin-top: 5px; }
 
   /* .album-card.playing .album-art-wrap::after {
     content: '';
@@ -276,6 +279,7 @@
   .album-info { padding: 0.75rem 0 0; }
 
   .album-title {
+    font-family: var(--font-title);
     font-size: var(--font-base);
     white-space: nowrap;
     overflow: hidden;
@@ -325,21 +329,178 @@
     pointer-events: none;
   }
 
-  /* Folder button */
-  .folder-btn {
+  /* ── Ellipsis menu ── */
+  .menu-anchor {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .menu-popover {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 0;
+    min-width: 200px;
+    z-index: 200;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--font-base);
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .menu-item:hover, .menu-item:focus-visible {
+    background: rgba(255,255,255,0.06);
+    outline: none;
+  }
+
+  /* ── Appearance modal ── */
+  #appearance-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+  }
+  #appearance-modal.open { display: flex; }
+
+  .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 360px;
+    margin: 1rem;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-header-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+  .modal-body { padding: 16px 20px 20px; }
+
+  .modal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .modal-row + .modal-row {
+    border-top: 1px solid var(--border);
+  }
+
+  .modal-label {
+    font-size: var(--font-base);
     color: var(--muted);
     flex-shrink: 0;
   }
 
-  .folder-btn:hover, .folder-btn:focus-visible {
+  .accent-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .accent-color-input {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .accent-color-input::-webkit-color-swatch-wrapper { padding: 0; }
+  .accent-color-input::-webkit-color-swatch { border: 1px solid var(--border); border-radius: 4px; }
+
+  .accent-hex-input {
+    width: 72px;
+    padding: 4px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
     color: var(--text);
-    background: rgba(255,255,255,0.06);
+    font-family: monospace;
+    font-size: var(--font-sm);
+    text-align: center;
+  }
+  .accent-hex-input:focus { outline: 1px solid var(--accent); }
+
+  .modal-select {
+    padding: 6px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font: inherit;
+    font-size: var(--font-sm);
+    cursor: pointer;
+    max-width: 200px;
+  }
+  .modal-select:focus { outline: 1px solid var(--accent); }
+  .modal-select option { background: var(--surface2); color: var(--text); }
+
+  /* ── Album progress segments ── */
+  .progress-segments {
+    position: absolute;
+    inset: 0;
+    display: none;
+    pointer-events: none;
+  }
+  .progress-bar-wrap.album-mode .progress-segments { display: block; }
+
+  .segment-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--bg);
   }
 
   /* Progress bar — full width at top of player */
   .player-progress {
     width: 100%;
-    padding-top: 0.5rem;
+    padding-top: 0.25rem;
   }
 
   .progress-bar-wrap {
@@ -407,6 +568,7 @@
   }
 
   .player-track-title {
+    font-family: var(--font-title);
     font-size: var(--font-base);
     white-space: nowrap;
     overflow: hidden;
@@ -427,7 +589,7 @@
   .controls {
     display: flex;
     align-items: center;
-    gap: 0rem;
+    gap: 0.25rem;
     flex-shrink: 0;
     padding-right: 0.5rem;
   }
@@ -458,11 +620,12 @@
     height: 44px;
     /* border: 2px solid var(--accent); */
     border-radius: 50%;
-    color: var(--accent);
+    background-color: var(--accent);
+    color: var(--bg);
   }
 
   .ctrl-btn.play-pause:hover {
-    background: var(--accent);
+    background: var(--text);
     color: var(--bg);
   }
 
@@ -676,6 +839,7 @@
         <div class="player-progress">
           <div class="progress-bar-wrap" id="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
+            <div class="progress-segments" id="progress-segments"></div>
           </div>
           <div class="progress-times">
             <span id="time-cur">0:00</span>
@@ -684,16 +848,92 @@
         </div>
       </div>
 
-      <!-- Folder picker button (always visible) -->
-      <button class="ctrl-btn folder-btn" id="open-folder-btn" title="Open music folder" aria-label="Open music folder">
-        <svg height="20" width="20" viewBox="0 -960 960 960" fill="currentColor"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Z"/></svg>
-      </button>
+      <!-- Ellipsis menu -->
+      <div class="menu-anchor" id="menu-anchor">
+        <button class="ctrl-btn" id="menu-btn" title="Menu" aria-label="Menu" aria-haspopup="true" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="12" r="2"/>
+            <circle cx="12" cy="19" r="2"/>
+          </svg>
+        </button>
+        <div class="menu-popover" id="menu-popover" role="menu" style="display:none">
+          <button class="menu-item" id="menu-pick-dir" role="menuitem">Open Directory</button>
+          <button class="menu-item" id="menu-toggle-progress" role="menuitem">Switch Progress Bar Style</button>
+          <button class="menu-item" id="menu-appearance" role="menuitem">Appearance Options…</button>
+        </div>
+      </div>
     </div>
 
   </div>
 </div>
 
 <div id="offline-toast">◎ You're offline — library still available</div>
+
+<!-- Appearance modal -->
+<div id="appearance-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span class="modal-header-title">Appearance</span>
+      <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <span class="modal-label">Player Accent Color</span>
+        <div class="accent-controls">
+          <input type="color" class="accent-color-input" id="accent-color-input" value="#eeeeee">
+          <input type="text" class="accent-hex-input" id="accent-hex-input" value="#eeeeee" maxlength="7" spellcheck="false">
+        </div>
+      </div>
+      <div class="modal-row">
+        <span class="modal-label">Title Font</span>
+        <select class="modal-select" id="title-font-select">
+          <option value="system-ui, sans-serif">System</option>
+          <option value="Google Sans">Google Sans</option>
+          <option value="Inter">Inter</option>
+          <option value="JetBrains Mono">JetBrains Mono</option>
+          <option value="DM Sans">DM Sans</option>
+          <option value="IBM Plex Sans">IBM Plex Sans</option>
+          <option value="Source Sans 3">Source Sans 3</option>
+          <option value="Source Serif 4">Source Serif 4</option>
+          <option value="SN Pro">SN Pro</option>
+          <option value="Momo Trust Sans">Momo Trust Sans</option>
+          <option value="Mozilla Text">Mozilla Text</option>
+          <option value="IBM Plex Mono">IBM Plex Mono</option>
+          <option value="Atkinson Hyperlegible Next">Atkinson Hyperlegible Next</option>
+          <option value="Geist Mono">Geist Mono</option>
+          <option value="Geist">Geist</option>
+          <option value="Funnel Sans">Funnel Sans</option>
+          <option value="Faculty Glyphic">Faculty Glyphic</option>
+          <option value="Familjen Grotesk">Familjen Grotesk</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <span class="modal-label">Body Font</span>
+        <select class="modal-select" id="body-font-select">
+          <option value="system-ui, sans-serif">System</option>
+          <option value="Google Sans">Google Sans</option>
+          <option value="Inter">Inter</option>
+          <option value="JetBrains Mono">JetBrains Mono</option>
+          <option value="DM Sans">DM Sans</option>
+          <option value="IBM Plex Sans">IBM Plex Sans</option>
+          <option value="Source Sans 3">Source Sans 3</option>
+          <option value="Source Serif 4">Source Serif 4</option>
+          <option value="SN Pro">SN Pro</option>
+          <option value="Momo Trust Sans">Momo Trust Sans</option>
+          <option value="Mozilla Text">Mozilla Text</option>
+          <option value="IBM Plex Mono">IBM Plex Mono</option>
+          <option value="Atkinson Hyperlegible Next">Atkinson Hyperlegible Next</option>
+          <option value="Geist Mono">Geist Mono</option>
+          <option value="Geist">Geist</option>
+          <option value="Funnel Sans">Funnel Sans</option>
+          <option value="Faculty Glyphic">Faculty Glyphic</option>
+          <option value="Familjen Grotesk">Familjen Grotesk</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
 
 <audio id="audio-el"></audio>
 
@@ -776,12 +1016,186 @@ let qIdx   = 0;
 let currentAlbumKey = null;
 let isPlaying = false;
 
+// ── Progress bar mode & album progress state ──
+let progressMode = localStorage.getItem('fm-progress-mode') || 'track';
+let trackDurations = [];
+let totalAlbumDuration = 0;
+let durationsReady = false;
+
+// ── Appearance state ──
+let accentColor = localStorage.getItem('fm-accent-color') || '#eeeeee';
+let titleFont   = localStorage.getItem('fm-title-font')   || 'system-ui, sans-serif';
+let bodyFont    = localStorage.getItem('fm-body-font')     || 'system-ui, sans-serif';
+
 const audioEl  = document.getElementById('audio-el');
 const playerEl = document.getElementById('player');
 const gridEl   = document.getElementById('albums-grid');
 const emptyEl  = document.getElementById('empty-state');
 const scanEl   = document.getElementById('scan-state');
 const scanCnt  = document.getElementById('scan-count');
+
+// ── Restore preferences immediately ──
+{
+  // Accent color
+  if (accentColor !== '#eeeeee') {
+    document.documentElement.style.setProperty('--accent', accentColor);
+  }
+  // Fonts — apply CSS vars inline; font loading happens after utilities are defined
+  if (titleFont !== 'system-ui, sans-serif') {
+    document.documentElement.style.setProperty('--font-title', `"${titleFont}", system-ui, sans-serif`);
+  }
+  if (bodyFont !== 'system-ui, sans-serif') {
+    document.documentElement.style.setProperty('--font-body', `"${bodyFont}", system-ui, sans-serif`);
+  }
+}
+
+// ════════════════════════════════════════════════
+// Album progress bar utilities
+// ════════════════════════════════════════════════
+function discoverDurations(tracks) {
+  durationsReady = false;
+  trackDurations = new Array(tracks.length).fill(0);
+  totalAlbumDuration = 0;
+
+  let resolved = 0;
+  return new Promise(resolve => {
+    if (tracks.length === 0) { durationsReady = true; resolve(); return; }
+
+    tracks.forEach((t, i) => {
+      const tmp = new Audio();
+      tmp.preload = 'metadata';
+      const url = URL.createObjectURL(t.file);
+
+      const done = () => {
+        trackDurations[i] = tmp.duration || 0;
+        URL.revokeObjectURL(url);
+        tmp.removeAttribute('src');
+        tmp.load();
+        resolved++;
+        if (resolved === tracks.length) {
+          totalAlbumDuration = trackDurations.reduce((a, b) => a + b, 0);
+          durationsReady = true;
+          renderSegments();
+          resolve();
+        }
+      };
+
+      tmp.addEventListener('loadedmetadata', done, { once: true });
+      tmp.addEventListener('error', done, { once: true });
+      tmp.src = url;
+    });
+  });
+}
+
+function renderSegments() {
+  const container = document.getElementById('progress-segments');
+  const wrap = document.getElementById('progress-bar');
+  container.innerHTML = '';
+
+  if (progressMode !== 'album' || !durationsReady || totalAlbumDuration === 0) {
+    wrap.classList.remove('album-mode');
+    return;
+  }
+
+  wrap.classList.add('album-mode');
+
+  let cumulative = 0;
+  for (let i = 0; i < trackDurations.length - 1; i++) {
+    cumulative += trackDurations[i];
+    const pct = (cumulative / totalAlbumDuration) * 100;
+    const div = document.createElement('div');
+    div.className = 'segment-divider';
+    div.style.left = pct + '%';
+    container.appendChild(div);
+  }
+}
+
+function getAlbumProgress() {
+  if (!durationsReady || totalAlbumDuration === 0) return 0;
+  let elapsed = 0;
+  for (let i = 0; i < qIdx; i++) elapsed += trackDurations[i];
+  elapsed += audioEl.currentTime;
+  return Math.min(1, elapsed / totalAlbumDuration);
+}
+
+function albumSeek(fraction) {
+  if (!durationsReady || totalAlbumDuration === 0) return;
+
+  const targetTime = fraction * totalAlbumDuration;
+  let cumulative = 0;
+
+  for (let i = 0; i < trackDurations.length; i++) {
+    if (cumulative + trackDurations[i] > targetTime || i === trackDurations.length - 1) {
+      const offset = targetTime - cumulative;
+      if (i !== qIdx) {
+        playTrack(i);
+        audioEl.addEventListener('loadedmetadata', () => {
+          audioEl.currentTime = Math.min(offset, audioEl.duration);
+        }, { once: true });
+      } else {
+        audioEl.currentTime = Math.min(offset, audioEl.duration);
+      }
+      return;
+    }
+    cumulative += trackDurations[i];
+  }
+}
+
+function updateProgress() {
+  if (!audioEl.duration) return;
+
+  let pct;
+  if (progressMode === 'album' && durationsReady && totalAlbumDuration > 0) {
+    pct = getAlbumProgress() * 100;
+  } else {
+    pct = (audioEl.currentTime / audioEl.duration) * 100;
+  }
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('time-cur').textContent = fmt(audioEl.currentTime);
+  document.getElementById('time-dur').textContent = fmt(audioEl.duration);
+}
+
+// ════════════════════════════════════════════════
+// Appearance utilities
+// ════════════════════════════════════════════════
+const loadedFonts = new Set();
+
+function loadGoogleFont(fontName) {
+  if (fontName === 'system-ui, sans-serif' || loadedFonts.has(fontName)) return;
+  loadedFonts.add(fontName);
+  const encoded = encodeURIComponent(fontName);
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;600;700&display=swap`;
+  document.head.appendChild(link);
+}
+
+function applyAccentColor(hex) {
+  accentColor = hex;
+  document.documentElement.style.setProperty('--accent', hex);
+  document.getElementById('accent-color-input').value = hex;
+  document.getElementById('accent-hex-input').value = hex;
+  localStorage.setItem('fm-accent-color', hex);
+}
+
+function applyFont(type, fontValue) {
+  loadGoogleFont(fontValue);
+  const stack = fontValue === 'system-ui, sans-serif' ? fontValue : `"${fontValue}", system-ui, sans-serif`;
+  if (type === 'title') {
+    titleFont = fontValue;
+    document.documentElement.style.setProperty('--font-title', stack);
+    localStorage.setItem('fm-title-font', fontValue);
+  } else {
+    bodyFont = fontValue;
+    document.documentElement.style.setProperty('--font-body', stack);
+    localStorage.setItem('fm-body-font', fontValue);
+  }
+}
+
+// Load stored Google Fonts (now that loadGoogleFont is defined)
+loadGoogleFont(titleFont);
+loadGoogleFont(bodyFont);
 
 // ════════════════════════════════════════════════
 // Directory persistence (IndexedDB)
@@ -852,8 +1266,94 @@ async function openFolder() {
   renderAlbums();
 }
 
-document.getElementById('open-folder-btn').addEventListener('click', openFolder);
 document.getElementById('pick-dir-btn').addEventListener('click', openFolder);
+
+// ════════════════════════════════════════════════
+// Ellipsis menu
+// ════════════════════════════════════════════════
+const menuBtn     = document.getElementById('menu-btn');
+const menuPopover = document.getElementById('menu-popover');
+
+function toggleMenu() {
+  const open = menuPopover.style.display === 'none';
+  menuPopover.style.display = open ? 'block' : 'none';
+  menuBtn.setAttribute('aria-expanded', open);
+}
+
+function closeMenu() {
+  menuPopover.style.display = 'none';
+  menuBtn.setAttribute('aria-expanded', 'false');
+}
+
+menuBtn.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
+
+document.addEventListener('click', e => {
+  if (!menuPopover.contains(e.target) && e.target !== menuBtn) closeMenu();
+});
+
+document.getElementById('menu-pick-dir').addEventListener('click', () => {
+  closeMenu();
+  openFolder();
+});
+
+document.getElementById('menu-toggle-progress').addEventListener('click', () => {
+  progressMode = progressMode === 'track' ? 'album' : 'track';
+  localStorage.setItem('fm-progress-mode', progressMode);
+  renderSegments();
+  updateProgress();
+  closeMenu();
+});
+
+document.getElementById('menu-appearance').addEventListener('click', () => {
+  closeMenu();
+  openAppearanceModal();
+});
+
+// ════════════════════════════════════════════════
+// Appearance modal
+// ════════════════════════════════════════════════
+const appearanceModal = document.getElementById('appearance-modal');
+
+function openAppearanceModal() {
+  // Sync inputs to current state
+  document.getElementById('accent-color-input').value = accentColor;
+  document.getElementById('accent-hex-input').value = accentColor;
+  document.getElementById('title-font-select').value = titleFont;
+  document.getElementById('body-font-select').value = bodyFont;
+  appearanceModal.classList.add('open');
+}
+
+function closeAppearanceModal() {
+  appearanceModal.classList.remove('open');
+}
+
+document.getElementById('modal-close').addEventListener('click', closeAppearanceModal);
+
+appearanceModal.addEventListener('click', e => {
+  if (e.target === appearanceModal) closeAppearanceModal();
+});
+
+// Accent color: color picker
+document.getElementById('accent-color-input').addEventListener('input', e => {
+  applyAccentColor(e.target.value);
+});
+
+// Accent color: hex text input
+document.getElementById('accent-hex-input').addEventListener('input', e => {
+  const val = e.target.value;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    applyAccentColor(val);
+  }
+});
+
+// Font selects
+document.getElementById('title-font-select').addEventListener('change', e => {
+  applyFont('title', e.target.value);
+});
+
+document.getElementById('body-font-select').addEventListener('change', e => {
+  applyFont('body', e.target.value);
+});
 
 // ════════════════════════════════════════════════
 // On load: restore saved directory handle if available
@@ -1023,6 +1523,9 @@ function playAlbum(key, data) {
     ? `<img src="${data.art}" alt="">`
     : '♫';
 
+  // Discover track durations for album progress mode (non-blocking)
+  discoverDurations(data.tracks);
+
   playTrack(0);
 }
 
@@ -1030,6 +1533,16 @@ function playTrack(idx) {
   if (idx < 0 || idx >= queue.length) return;
   qIdx = idx;
   const t = queue[idx];
+
+  // Suppress progress bar transition during track switch in album mode
+  if (progressMode === 'album') {
+    const fillEl = document.getElementById('progress-fill');
+    fillEl.style.transition = 'none';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { fillEl.style.transition = 'width 0.3s linear'; });
+    });
+  }
+
   audioEl.src = URL.createObjectURL(t.file);
   audioEl.play().catch(console.warn);
 
@@ -1078,14 +1591,10 @@ audioEl.addEventListener('ended', () => {
 });
 
 audioEl.addEventListener('timeupdate', () => {
-  if (!audioEl.duration) return;
-  const pct = (audioEl.currentTime / audioEl.duration) * 100;
-  document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('time-cur').textContent = fmt(audioEl.currentTime);
-  document.getElementById('time-dur').textContent = fmt(audioEl.duration);
+  updateProgress();
 
   // Update Media Session position state
-  if ('mediaSession' in navigator && navigator.mediaSession.setPositionState) {
+  if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && audioEl.duration) {
     navigator.mediaSession.setPositionState({
       duration:     audioEl.duration,
       playbackRate: audioEl.playbackRate,
@@ -1098,10 +1607,16 @@ audioEl.addEventListener('timeupdate', () => {
 const progressBar = document.getElementById('progress-bar');
 
 function seek(e) {
-  if (!audioEl.duration) return;
   const rect = progressBar.getBoundingClientRect();
   const x    = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-  audioEl.currentTime = Math.max(0, Math.min(1, x / rect.width)) * audioEl.duration;
+  const fraction = Math.max(0, Math.min(1, x / rect.width));
+
+  if (progressMode === 'album' && durationsReady && totalAlbumDuration > 0) {
+    albumSeek(fraction);
+  } else {
+    if (!audioEl.duration) return;
+    audioEl.currentTime = fraction * audioEl.duration;
+  }
 }
 
 progressBar.addEventListener('click',      seek);
@@ -1150,7 +1665,8 @@ function fmt(s) {
 // Keyboard shortcuts
 // ════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'Escape') { closeMenu(); closeAppearanceModal(); return; }
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
   if (e.code === 'Space')      { e.preventDefault(); document.getElementById('btn-play').click(); }
   if (e.code === 'ArrowRight') { e.preventDefault(); document.getElementById('btn-next').click(); }
   if (e.code === 'ArrowLeft')  { e.preventDefault(); document.getElementById('btn-prev').click(); }
