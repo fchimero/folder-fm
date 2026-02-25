@@ -12,6 +12,7 @@ FolderFM built as a progressive web app, so you can install it locally. It was v
 * LISTEN TO YOUR MUSIC.
 
 # Known Bugs
+* Yes, I know gapless playback isn’t.
 * Yes, I know albums with multiple artists on tracks will split into separate items on the grid.
 * Yes, I know it rescans the directory on every launch.
 * Yes, I know the empty state for the player when no directory is specified could be better.
