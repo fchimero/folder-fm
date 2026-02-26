@@ -43,6 +43,7 @@
     overflow-x: hidden;
     /* Prevent overscroll bounce on iOS */
     overscroll-behavior: none;
+    min-width: 400px;
   }
 
   /* open-btn still used inside player empty state */
@@ -162,8 +163,8 @@
   /* ── Albums grid ── */
   #albums-grid {
     display: none;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
   }
 
   .album-card {
@@ -327,6 +328,8 @@
     opacity: 0.3;
     pointer-events: none;
   }
+
+  #player.idle .player-art { background-color: rgba(255,255,255,0.4); color: var(--bg); }
 
   /* ── Ellipsis menu ── */
   .menu-anchor {
@@ -713,16 +716,16 @@
     }
 
     #albums-grid {
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 1.25rem;
+      /* grid-template-columns: 1fr 1fr; */
+      /* grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); */
+      /* gap: 1.25rem; */
     }
 
     .player-body { padding: 0 1rem; gap: 0.75rem; }
-    .player-progress { padding: 0 1rem; }
   }
 
   /* Mobile */
-  @media (max-width: 480px) {
+  @media (max-width: 550px) {
     main {
       padding: 1rem 1rem;
       padding-top: calc(1rem + var(--safe-top));
@@ -730,12 +733,17 @@
     }
 
     #albums-grid {
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      /* grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); */
+      grid-template-columns: calc(50% - 0.325rem) calc(50% - 0.325rem);
       gap: 0.75rem;
     }
 
     .album-info { padding-top: 0.5rem; }
     .album-title { font-size: var(--font-base); }
+
+    /* remove player art on smaller breakpoints */
+    .player-art, #player.idle .player-art { display: none; }
+    .player-track, #player.idle .player-track { padding-left: 0; }
 
     /* On mobile: always show overlay so tapping is clear */
     .album-overlay { opacity: 0; }
@@ -745,16 +753,14 @@
 
     #player {
       flex-direction: column;
+      /* margin-left: 1rem;
+      margin-right: 1rem; */
     }
 
     .player-body {
       height: auto;
       padding: 0.5rem 1rem 0.6rem;
       gap: 0.6rem;
-    }
-
-    .player-progress {
-      padding: 0.75rem 1rem 0;
     }
 
     .player-art { width: 48px; height: 48px; font-size: 1.1rem; }
@@ -769,17 +775,17 @@
   }
 
   /* Very small (320px) */
-  @media (max-width: 360px) {
+  /* @media (max-width: 360px) {
     #albums-grid {
       grid-template-columns: repeat(2, 1fr);
-      gap: 0.6rem;
+      gap: 0.5rem;
     }
-  }
+  } */
 
   /* Large screens — wider grid */
   @media (min-width: 1400px) {
     #albums-grid {
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      /* grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); */
     }
 
     main { padding: 2.5rem 4rem; padding-bottom: calc(var(--player-h) + 8rem); }
