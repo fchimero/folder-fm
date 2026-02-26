@@ -59,7 +59,7 @@
     font-size: var(--font-base);
     padding: 0.6rem 1.4rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s;
     min-height: 44px;
     white-space: nowrap;
     font-family: inherit;
@@ -185,7 +185,7 @@
     overflow: hidden;
     border-radius: 4px;
     background: var(--surface2);
-    border: 1px solid rgba(255,255,255,0.05)
+    border: 1px solid rgba(255,255,255,0.05);
   }
 
   .album-art-wrap img {
@@ -193,12 +193,7 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
   }
-
-  /* .album-card:hover .album-art-wrap img {
-    transform: scale(1.06);
-  } */
 
   .album-art-wrap .no-art {
     width: 100%;
@@ -214,17 +209,15 @@
   .album-overlay {
     position: absolute;
     inset: 0;
-    /* background: rgba(0,0,0,0.5); */
     display: flex;
     align-items: flex-end;
-    justify-content: right;
+    justify-content: flex-end;
     opacity: 0;
     transition: opacity 0.25s;
   }
 
   /* Show overlay on hover (desktop) or when playing (all) */
   .album-card:hover .album-overlay { opacity: 1; }
-  /* .album-card.playing .album-overlay { opacity: 1; } */
 
   .play-icon {
     width: 36px;
@@ -241,17 +234,6 @@
   }
 
   .play-icon svg { margin-top: 5px; }
-
-  /* .album-card.playing .album-art-wrap::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border: 1px solid var(--accent);
-    pointer-events: none;
-    z-index: 2;
-    border-radius: 8px;
-    content: '';
-  } */
 
   /* Animated bars for playing card */
   .playing-indicator {
@@ -565,11 +547,6 @@
   }
 
   .progress-times {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.55rem;
-    color: var(--muted);
-    margin-top: 0.35rem;
     display: none;
   }
 
@@ -659,7 +636,6 @@
   .ctrl-btn.play-pause {
     width: 44px;
     height: 44px;
-    /* border: 2px solid var(--accent); */
     border-radius: 50%;
     background-color: var(--accent);
     color: var(--bg);
@@ -722,12 +698,6 @@
       padding-bottom: calc(var(--player-h) + 7rem + var(--safe-bottom));
     }
 
-    #albums-grid {
-      /* grid-template-columns: 1fr 1fr; */
-      /* grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); */
-      /* gap: 1.25rem; */
-    }
-
     .player-body { padding: 0 1rem; gap: 0.75rem; }
   }
 
@@ -740,7 +710,6 @@
     }
 
     #albums-grid {
-      /* grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); */
       grid-template-columns: calc(50% - 0.325rem) calc(50% - 0.325rem);
       gap: 0.75rem;
     }
@@ -760,8 +729,6 @@
 
     #player {
       flex-direction: column;
-      /* margin-left: 1rem;
-      margin-right: 1rem; */
     }
 
     .player-body {
@@ -781,20 +748,8 @@
     .empty-icon { font-size: 3.5rem; }
   }
 
-  /* Very small (320px) */
-  /* @media (max-width: 360px) {
-    #albums-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.5rem;
-    }
-  } */
-
   /* Large screens — wider grid */
   @media (min-width: 1400px) {
-    #albums-grid {
-      /* grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); */
-    }
-
     main { padding: 2.5rem 4rem; padding-bottom: calc(var(--player-h) + 8rem); }
   }
 
@@ -816,7 +771,7 @@
   .text-btn {
     background: none;
     border: none;
-    color: var(--fg);
+    color: var(--text);
     cursor: pointer;
     font: inherit;
     padding: 0;
@@ -848,7 +803,7 @@
   <div id="scan-state">
     <div class="scan-spinner"></div>
     <div id="scan-count">0</div>
-    <div class="scan-text">Scanning for albums…</div>
+    <div class="scan-text">tracks found</div>
   </div>
 
   <div id="albums-grid"></div>
@@ -878,8 +833,8 @@
 
       <!-- Track info + progress -->
       <div class="player-track">
-        <div class="player-track-title" id="player-title">No track playing</div>
-        <div class="player-track-album" id="player-album">—</div>
+        <div class="player-track-title" id="player-title">Pick an album</div>
+        <div class="player-track-album" id="player-album"></div>
         <div class="player-progress">
           <div class="progress-bar-wrap" id="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
