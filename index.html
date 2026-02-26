@@ -43,7 +43,6 @@
     overflow-x: hidden;
     /* Prevent overscroll bounce on iOS */
     overscroll-behavior: none;
-    -webkit-font-smoothing: antialiased;
   }
 
   /* open-btn still used inside player empty state */
@@ -479,6 +478,38 @@
   }
   .modal-select:focus { outline: 1px solid var(--accent); }
   .modal-select option { background: var(--surface2); color: var(--text); }
+
+  /* ── Toggle switch ── */
+  .toggle {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle input { display: none; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: background 0.2s;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle input:checked + .toggle-track { background: var(--accent); border-color: var(--accent); }
+  .toggle input:checked + .toggle-track::after { transform: translateX(16px); background: var(--bg); }
 
   /* ── Album progress segments ── */
   .progress-segments {
@@ -931,6 +962,13 @@
           <option value="Familjen Grotesk">Familjen Grotesk</option>
         </select>
       </div>
+      <div class="modal-row">
+        <span class="modal-label">Font Smoothing</span>
+        <label class="toggle">
+          <input type="checkbox" id="font-smoothing-toggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
     </div>
   </div>
 </div>
@@ -1026,6 +1064,7 @@ let durationsReady = false;
 let accentColor = localStorage.getItem('fm-accent-color') || '#eeeeee';
 let titleFont   = localStorage.getItem('fm-title-font')   || 'system-ui, sans-serif';
 let bodyFont    = localStorage.getItem('fm-body-font')     || 'system-ui, sans-serif';
+let fontSmoothing = localStorage.getItem('fm-font-smoothing') === 'true';
 
 const audioEl  = document.getElementById('audio-el');
 const playerEl = document.getElementById('player');
@@ -1046,6 +1085,9 @@ const scanCnt  = document.getElementById('scan-count');
   }
   if (bodyFont !== 'system-ui, sans-serif') {
     document.documentElement.style.setProperty('--font-body', `"${bodyFont}", system-ui, sans-serif`);
+  }
+  if (fontSmoothing) {
+    document.documentElement.style.setProperty('-webkit-font-smoothing', 'antialiased');
   }
 }
 
@@ -1320,6 +1362,7 @@ function openAppearanceModal() {
   document.getElementById('accent-hex-input').value = accentColor;
   document.getElementById('title-font-select').value = titleFont;
   document.getElementById('body-font-select').value = bodyFont;
+  document.getElementById('font-smoothing-toggle').checked = fontSmoothing;
   appearanceModal.classList.add('open');
 }
 
@@ -1353,6 +1396,14 @@ document.getElementById('title-font-select').addEventListener('change', e => {
 
 document.getElementById('body-font-select').addEventListener('change', e => {
   applyFont('body', e.target.value);
+});
+
+// Font smoothing toggle
+document.getElementById('font-smoothing-toggle').addEventListener('change', e => {
+  fontSmoothing = e.target.checked;
+  document.documentElement.style.setProperty('-webkit-font-smoothing',
+    fontSmoothing ? 'antialiased' : 'subpixel-antialiased');
+  localStorage.setItem('fm-font-smoothing', fontSmoothing);
 });
 
 // ════════════════════════════════════════════════
