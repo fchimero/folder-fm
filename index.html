@@ -35,6 +35,10 @@
     --safe-right: env(safe-area-inset-right, 0px);
   }
 
+  html {
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
   html, body {
     height: 100%;
     background: var(--bg);
@@ -45,6 +49,7 @@
     overscroll-behavior: none;
     min-width: 400px;
   }
+
 
   /* open-btn still used inside player empty state */
   .open-btn {
@@ -178,7 +183,7 @@
     position: relative;
     aspect-ratio: 1;
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: 4px;
     background: var(--surface2);
     border: 1px solid rgba(255,255,255,0.05)
   }
