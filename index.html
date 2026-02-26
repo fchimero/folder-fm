@@ -1747,6 +1747,27 @@ document.addEventListener('visibilitychange', () => {
 
 audioEl.addEventListener('play',  requestWakeLock);
 audioEl.addEventListener('pause', () => { wakeLock?.release(); wakeLock = null; });
+
+// ════════════════════════════════════════════════
+// Enforce minimum window size (standalone PWA only)
+// ════════════════════════════════════════════════
+if (window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: window-controls-overlay)').matches) {
+  let resizeRaf = 0;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      const minW = 400;
+      const minH = 400;
+      if (window.outerWidth < minW || window.outerHeight < minH) {
+        window.resizeTo(
+          Math.max(window.outerWidth, minW),
+          Math.max(window.outerHeight, minH)
+        );
+      }
+    });
+  });
+}
 </script>
 </body>
 </html>
