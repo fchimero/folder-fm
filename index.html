@@ -283,6 +283,7 @@
   .paused .bar { animation-play-state: paused; }
 
   .album-info { padding: 0.75rem 0 0; }
+  .hide-album-info .album-info { display: none; }
 
   .album-title {
     font-family: var(--font-title);
@@ -975,6 +976,13 @@
         </select>
       </div>
       <div class="modal-row">
+        <span class="modal-label">Album Info in Grid</span>
+        <label class="toggle">
+          <input type="checkbox" id="album-info-toggle">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="modal-row">
         <span class="modal-label">Font Smoothing</span>
         <label class="toggle">
           <input type="checkbox" id="font-smoothing-toggle">
@@ -1077,6 +1085,7 @@ let accentColor = localStorage.getItem('fm-accent-color') || '#eeeeee';
 let titleFont   = localStorage.getItem('fm-title-font')   || 'system-ui, sans-serif';
 let bodyFont    = localStorage.getItem('fm-body-font')     || 'system-ui, sans-serif';
 let fontSmoothing = localStorage.getItem('fm-font-smoothing') === 'true';
+let showAlbumInfo = localStorage.getItem('fm-show-album-info') !== 'false';
 
 const audioEl  = document.getElementById('audio-el');
 const playerEl = document.getElementById('player');
@@ -1100,6 +1109,9 @@ const scanCnt  = document.getElementById('scan-count');
   }
   if (fontSmoothing) {
     document.documentElement.style.setProperty('-webkit-font-smoothing', 'antialiased');
+  }
+  if (!showAlbumInfo) {
+    document.documentElement.classList.add('hide-album-info');
   }
 }
 
@@ -1374,6 +1386,7 @@ function openAppearanceModal() {
   document.getElementById('accent-hex-input').value = accentColor;
   document.getElementById('title-font-select').value = titleFont;
   document.getElementById('body-font-select').value = bodyFont;
+  document.getElementById('album-info-toggle').checked = showAlbumInfo;
   document.getElementById('font-smoothing-toggle').checked = fontSmoothing;
   appearanceModal.classList.add('open');
 }
@@ -1408,6 +1421,13 @@ document.getElementById('title-font-select').addEventListener('change', e => {
 
 document.getElementById('body-font-select').addEventListener('change', e => {
   applyFont('body', e.target.value);
+});
+
+// Album info toggle
+document.getElementById('album-info-toggle').addEventListener('change', e => {
+  showAlbumInfo = e.target.checked;
+  document.documentElement.classList.toggle('hide-album-info', !showAlbumInfo);
+  localStorage.setItem('fm-show-album-info', showAlbumInfo);
 });
 
 // Font smoothing toggle
