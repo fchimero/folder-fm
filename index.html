@@ -779,6 +779,179 @@
     text-underline-offset: 2px;
   }
   .text-btn:hover { opacity: 0.7; }
+
+  /* ═══════════════════════════════════════════
+     COVER FLOW
+  ═══════════════════════════════════════════ */
+
+  #coverflow-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - var(--player-h) - 8rem);
+    overflow: hidden;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html.browse-coverflow #coverflow-container {
+    display: flex;
+  }
+
+  html.browse-coverflow #albums-grid {
+    display: none !important;
+  }
+
+  .coverflow-stage {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    perspective: 1200px;
+    perspective-origin: center 40%;
+  }
+
+  .cf-item {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 320px;
+    height: 320px;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.25, 0.1, 0.25, 1),
+                opacity 0.45s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    will-change: transform;
+  }
+
+  .cf-item.cf-center {
+    z-index: 10;
+    cursor: pointer;
+  }
+
+  .cf-item.cf-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .cf-cover {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  }
+
+  .cf-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .cf-cover .no-art {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    color: var(--border);
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+  }
+
+  /* Playing indicator badge on coverflow items */
+  .cf-playing-indicator {
+    display: none;
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    gap: 3px;
+    align-items: flex-end;
+    height: 18px;
+    background: rgba(22,22,22,0.8);
+    border-radius: 12px;
+    padding: 4px 8px;
+  }
+
+  .cf-item.cf-playing .cf-playing-indicator {
+    display: flex;
+  }
+
+  .cf-playing-indicator .bar {
+    width: 3px;
+    background: var(--accent);
+    border-radius: 1px;
+    animation: eq 0.8s ease-in-out infinite alternate;
+    transform-origin: bottom center;
+  }
+
+  .cf-item.paused .cf-playing-indicator .bar {
+    animation-play-state: paused;
+  }
+
+  /* Info region below coverflow */
+  .coverflow-info {
+    text-align: center;
+    padding: 1.5rem 1rem 0;
+    min-height: 60px;
+  }
+
+  .coverflow-album-title {
+    font-family: var(--font-title);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+    transition: opacity 0.2s;
+  }
+
+  .coverflow-album-artist {
+    font-family: var(--font-body);
+    font-size: var(--font-base);
+    color: var(--muted);
+    transition: opacity 0.2s;
+  }
+
+  /* Edge fade gradients */
+  .coverflow-stage::before,
+  .coverflow-stage::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 120px;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .coverflow-stage::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg) 0%, transparent 100%);
+  }
+
+  .coverflow-stage::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg) 0%, transparent 100%);
+  }
+
+  /* Coverflow responsive */
+  @media (max-width: 768px) {
+    .cf-item { width: 250px; height: 250px; }
+    .coverflow-stage { height: 330px; }
+  }
+
+  @media (max-width: 550px) {
+    .cf-item { width: 200px; height: 200px; }
+    .coverflow-stage { height: 280px; perspective: 800px; }
+    .coverflow-album-title { font-size: 1.1rem; }
+    .coverflow-info { padding-top: 1rem; }
+  }
 </style>
 </head>
 <body>
@@ -807,6 +980,14 @@
   </div>
 
   <div id="albums-grid"></div>
+
+  <div id="coverflow-container">
+    <div class="coverflow-stage"></div>
+    <div class="coverflow-info">
+      <div class="coverflow-album-title"></div>
+      <div class="coverflow-album-artist"></div>
+    </div>
+  </div>
 </main>
 
 <!-- Player — always visible -->
@@ -877,6 +1058,13 @@
       <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
     </div>
     <div class="modal-body">
+      <div class="modal-row">
+        <span class="modal-label">Browse Style</span>
+        <select class="modal-select" id="browse-style-select">
+          <option value="grid">Grid</option>
+          <option value="coverflow">Cover Flow</option>
+        </select>
+      </div>
       <div class="modal-row">
         <span class="modal-label">Player Accent Color</span>
         <div class="accent-controls">
@@ -1041,6 +1229,12 @@ let titleFont   = localStorage.getItem('fm-title-font')   || 'system-ui, sans-se
 let bodyFont    = localStorage.getItem('fm-body-font')     || 'system-ui, sans-serif';
 let fontSmoothing = localStorage.getItem('fm-font-smoothing') === 'true';
 let showAlbumInfo = localStorage.getItem('fm-show-album-info') !== 'false';
+let browseStyle = localStorage.getItem('fm-browse-style') || 'grid';
+
+// ── Cover Flow state ──
+let cfIndex = 0;
+let cfSortedAlbums = [];
+const CF_CONFIG = { sideOffset: 200, sideAngle: 65, sideScale: 0.7, sideZ: -200, visibleRange: 5 };
 
 const audioEl  = document.getElementById('audio-el');
 const playerEl = document.getElementById('player');
@@ -1067,6 +1261,9 @@ const scanCnt  = document.getElementById('scan-count');
   }
   if (!showAlbumInfo) {
     document.documentElement.classList.add('hide-album-info');
+  }
+  if (browseStyle === 'coverflow') {
+    document.documentElement.classList.add('browse-coverflow');
   }
 }
 
@@ -1276,6 +1473,10 @@ async function openFolder() {
   albums = {};
   gridEl.innerHTML = '';
   gridEl.style.display = 'none';
+  const cfStage = document.querySelector('.coverflow-stage');
+  if (cfStage) cfStage.innerHTML = '';
+  cfIndex = 0;
+  cfSortedAlbums = [];
   emptyEl.style.display = 'none';
   scanEl.style.display = 'flex';
   scanCnt.textContent = '0';
@@ -1343,6 +1544,7 @@ function openAppearanceModal() {
   document.getElementById('body-font-select').value = bodyFont;
   document.getElementById('album-info-toggle').checked = showAlbumInfo;
   document.getElementById('font-smoothing-toggle').checked = fontSmoothing;
+  document.getElementById('browse-style-select').value = browseStyle;
   appearanceModal.classList.add('open');
 }
 
@@ -1391,6 +1593,22 @@ document.getElementById('font-smoothing-toggle').addEventListener('change', e =>
   document.documentElement.style.setProperty('-webkit-font-smoothing',
     fontSmoothing ? 'antialiased' : 'subpixel-antialiased');
   localStorage.setItem('fm-font-smoothing', fontSmoothing);
+});
+
+// Browse style select
+document.getElementById('browse-style-select').addEventListener('change', e => {
+  setBrowseStyle(e.target.value);
+});
+
+// Initialize coverflow event listeners
+initCoverflowWheel();
+initCoverflowTouch();
+
+window.addEventListener('resize', () => {
+  if (browseStyle === 'coverflow' && cfSortedAlbums.length) {
+    updateCfConfig();
+    updateCoverflowPositions();
+  }
 });
 
 // ════════════════════════════════════════════════
@@ -1483,6 +1701,239 @@ function processTrack(file) {
 }
 
 // ════════════════════════════════════════════════
+// Cover Flow
+// ════════════════════════════════════════════════
+
+function updateCfConfig() {
+  const w = window.innerWidth;
+  if (w <= 550) {
+    Object.assign(CF_CONFIG, { sideOffset: 100, sideAngle: 55, sideScale: 0.6, sideZ: -150 });
+  } else if (w <= 768) {
+    Object.assign(CF_CONFIG, { sideOffset: 150, sideAngle: 65, sideScale: 0.7, sideZ: -180 });
+  } else {
+    Object.assign(CF_CONFIG, { sideOffset: 200, sideAngle: 65, sideScale: 0.7, sideZ: -200 });
+  }
+}
+
+function renderCoverflow() {
+  const stage = document.querySelector('.coverflow-stage');
+  if (!stage) return;
+  stage.innerHTML = '';
+
+  cfSortedAlbums = Object.entries(albums).sort(([,a],[,b]) =>
+    `${a.artist}${a.album}`.localeCompare(`${b.artist}${b.album}`));
+
+  if (!cfSortedAlbums.length) return;
+
+  cfIndex = Math.max(0, Math.min(cfIndex, cfSortedAlbums.length - 1));
+
+  cfSortedAlbums.forEach(([key, data], i) => {
+    const item = document.createElement('div');
+    item.className = 'cf-item';
+    item.dataset.index = i;
+    item.dataset.key = key;
+
+    const cover = document.createElement('div');
+    cover.className = 'cf-cover';
+
+    if (data.art) {
+      const img = document.createElement('img');
+      img.src = data.art;
+      img.alt = esc(data.album);
+      cover.appendChild(img);
+    } else {
+      const noArt = document.createElement('div');
+      noArt.className = 'no-art';
+      noArt.textContent = '\u25C9';
+      cover.appendChild(noArt);
+    }
+
+    // Playing indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'cf-playing-indicator';
+    indicator.setAttribute('aria-hidden', 'true');
+    [8, 14, 10, 16].forEach((h, b) => {
+      const bar = document.createElement('span');
+      bar.className = 'bar';
+      bar.style.height = h + 'px';
+      bar.style.animationDelay = [0, 0.15, 0.3, 0.1][b] + 's';
+      indicator.appendChild(bar);
+    });
+    cover.appendChild(indicator);
+    item.appendChild(cover);
+
+
+
+    item.addEventListener('click', () => {
+      if (i === cfIndex) {
+        playAlbum(key, data);
+      } else {
+        cfIndex = i;
+        updateCoverflowPositions();
+      }
+    });
+
+    stage.appendChild(item);
+  });
+
+  updateCfConfig();
+  updateCoverflowPlayingState();
+  updateCoverflowPositions();
+}
+
+function updateCoverflowPositions() {
+  const stage = document.querySelector('.coverflow-stage');
+  if (!stage) return;
+  const items = stage.querySelectorAll('.cf-item');
+  const { sideOffset, sideAngle, sideScale, sideZ, visibleRange } = CF_CONFIG;
+
+  items.forEach((item, i) => {
+    const offset = i - cfIndex;
+    const absOffset = Math.abs(offset);
+
+    item.classList.remove('cf-center', 'cf-hidden');
+
+    if (absOffset > visibleRange) {
+      item.classList.add('cf-hidden');
+      item.style.transform = '';
+      item.style.opacity = '0';
+      item.style.zIndex = '0';
+      return;
+    }
+
+    if (offset === 0) {
+      item.classList.add('cf-center');
+      item.style.transform = 'translate(-50%, 0) translateZ(0) rotateY(0deg) scale(1)';
+      item.style.opacity = '1';
+      item.style.zIndex = '10';
+    } else if (offset < 0) {
+      item.style.transform =
+        `translate(calc(-50% - ${sideOffset * absOffset}px), 0) ` +
+        `translateZ(${sideZ}px) rotateY(${sideAngle}deg) scale(${sideScale})`;
+      item.style.opacity = Math.max(0.3, 1 - absOffset * 0.15);
+      item.style.zIndex = 10 - absOffset;
+    } else {
+      item.style.transform =
+        `translate(calc(-50% + ${sideOffset * absOffset}px), 0) ` +
+        `translateZ(${sideZ}px) rotateY(-${sideAngle}deg) scale(${sideScale})`;
+      item.style.opacity = Math.max(0.3, 1 - absOffset * 0.15);
+      item.style.zIndex = 10 - absOffset;
+    }
+  });
+
+  updateCoverflowInfo();
+}
+
+function updateCoverflowInfo() {
+  if (!cfSortedAlbums.length) return;
+  const [, data] = cfSortedAlbums[cfIndex];
+  const titleEl = document.querySelector('.coverflow-album-title');
+  const artistEl = document.querySelector('.coverflow-album-artist');
+  if (titleEl) titleEl.textContent = data.album;
+  if (artistEl) artistEl.textContent = data.artist;
+}
+
+function updateCoverflowPlayingState() {
+  const stage = document.querySelector('.coverflow-stage');
+  if (!stage) return;
+  stage.querySelectorAll('.cf-item').forEach(item => {
+    item.classList.remove('cf-playing', 'paused');
+    if (item.dataset.key === currentAlbumKey) {
+      item.classList.add('cf-playing');
+      if (!isPlaying) item.classList.add('paused');
+    }
+  });
+}
+
+function cfNavigate(direction) {
+  const newIndex = cfIndex + direction;
+  if (newIndex < 0 || newIndex >= cfSortedAlbums.length) return;
+  cfIndex = newIndex;
+  updateCoverflowPositions();
+}
+
+function setBrowseStyle(style) {
+  browseStyle = style;
+  localStorage.setItem('fm-browse-style', style);
+
+  if (style === 'coverflow') {
+    document.documentElement.classList.add('browse-coverflow');
+    if (Object.keys(albums).length > 0) {
+      renderCoverflow();
+      if (currentAlbumKey) {
+        const playingIdx = cfSortedAlbums.findIndex(([key]) => key === currentAlbumKey);
+        if (playingIdx !== -1) cfIndex = playingIdx;
+        updateCoverflowPositions();
+      }
+    }
+  } else {
+    document.documentElement.classList.remove('browse-coverflow');
+    if (Object.keys(albums).length > 0) {
+      gridEl.style.display = 'grid';
+    }
+  }
+}
+
+function initCoverflowWheel() {
+  const container = document.getElementById('coverflow-container');
+  if (!container) return;
+
+  let wheelAccum = 0;
+  const WHEEL_THRESHOLD = 50;
+  let wheelTimeout;
+
+  container.addEventListener('wheel', e => {
+    if (browseStyle !== 'coverflow') return;
+    e.preventDefault();
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    wheelAccum += delta;
+
+    clearTimeout(wheelTimeout);
+    wheelTimeout = setTimeout(() => { wheelAccum = 0; }, 200);
+
+    if (Math.abs(wheelAccum) >= WHEEL_THRESHOLD) {
+      cfNavigate(wheelAccum > 0 ? 1 : -1);
+      wheelAccum = 0;
+    }
+  }, { passive: false });
+}
+
+function initCoverflowTouch() {
+  const container = document.getElementById('coverflow-container');
+  if (!container) return;
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwiping = false;
+  const SWIPE_THRESHOLD = 50;
+
+  container.addEventListener('touchstart', e => {
+    if (browseStyle !== 'coverflow') return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = false;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', e => {
+    if (browseStyle !== 'coverflow') return;
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      isSwiping = true;
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', e => {
+    if (!isSwiping || browseStyle !== 'coverflow') return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+      cfNavigate(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+}
+
+// ════════════════════════════════════════════════
 // Render album grid
 // ════════════════════════════════════════════════
 function renderAlbums() {
@@ -1497,7 +1948,11 @@ function renderAlbums() {
     return;
   }
 
-  gridEl.style.display = 'grid';
+  if (browseStyle === 'coverflow') {
+    renderCoverflow();
+  } else {
+    gridEl.style.display = 'grid';
+  }
 
   sorted.forEach(([key, data], i) => {
     data.tracks.sort((a,b) => a.track - b.track);
@@ -1563,6 +2018,8 @@ function playAlbum(key, data) {
 
   // Discover track durations for album progress mode (non-blocking)
   discoverDurations(data.tracks);
+
+  updateCoverflowPlayingState();
 
   playTrack(0);
 }
@@ -1688,6 +2145,8 @@ function setPlayState(playing) {
     c.classList.toggle('paused', !playing);
   });
 
+  updateCoverflowPlayingState();
+
   if ('mediaSession' in navigator) {
     navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
   }
@@ -1705,9 +2164,22 @@ function fmt(s) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeMenu(); closeAppearanceModal(); return; }
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-  if (e.code === 'Space')      { e.preventDefault(); document.getElementById('btn-play').click(); }
-  if (e.code === 'ArrowRight') { e.preventDefault(); document.getElementById('btn-next').click(); }
-  if (e.code === 'ArrowLeft')  { e.preventDefault(); document.getElementById('btn-prev').click(); }
+  if (e.code === 'Space') { e.preventDefault(); document.getElementById('btn-play').click(); }
+  if (e.code === 'ArrowRight') {
+    e.preventDefault();
+    if (browseStyle === 'coverflow' && cfSortedAlbums.length) cfNavigate(1);
+    else document.getElementById('btn-next').click();
+  }
+  if (e.code === 'ArrowLeft') {
+    e.preventDefault();
+    if (browseStyle === 'coverflow' && cfSortedAlbums.length) cfNavigate(-1);
+    else document.getElementById('btn-prev').click();
+  }
+  if (e.code === 'Enter' && browseStyle === 'coverflow' && cfSortedAlbums.length) {
+    e.preventDefault();
+    const [key, data] = cfSortedAlbums[cfIndex];
+    playAlbum(key, data);
+  }
 });
 
 // ════════════════════════════════════════════════
