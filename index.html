@@ -35,9 +35,6 @@
     --safe-right: env(safe-area-inset-right, 0px);
   }
 
-  html {
-    border-top: 1px solid rgba(255,255,255,0.08);
-  }
 
   html, body {
     height: 100%;
@@ -48,6 +45,18 @@
     /* Prevent overscroll bounce on iOS */
     overscroll-behavior: none;
     min-width: 400px;
+  }
+
+  body {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0px,
+      rgba(0, 0, 0, 0.104) 9.6px,
+      rgba(0, 0, 0, 0.352) 19.2px,
+      rgba(0, 0, 0, 0.648) 28.8px,
+      rgba(0, 0, 0, 0.896) 38.4px,
+      black 48px
+    );
   }
 
 
@@ -76,30 +85,39 @@
     display: none;
     align-items: center;
     gap: 1rem;
-    padding: 0.7rem 2rem;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    background: #fc0;
+    /* border-bottom: 1px solid var(--border); */
     font-size: var(--font-base);
-    color: var(--muted);
+    color: var(--bg);
+    position: absolute;
+    bottom: 86px;
+    z-index: 4;
+    left: 50dvw;
+    transform: translate(-50%);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 640px;
   }
 
   #install-banner span { flex: 1; }
 
   .install-btn {
-    background: var(--accent);
+    background: var(--bg);
     border: none;
-    color: var(--bg);
+    color: var(--text);
     font-size: var(--font-base);
     padding: 0.4rem 1rem;
     cursor: pointer;
     transition: opacity 0.2s;
+    border-radius: 48px;
   }
   .install-btn:hover { opacity: 0.85; }
 
   .dismiss-btn {
     background: none;
     border: none;
-    color: var(--muted);
+    color: var(--bg);
     cursor: pointer;
     font-size: var(--font-base);
     line-height: 1;
