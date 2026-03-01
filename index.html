@@ -1605,7 +1605,11 @@ function processTrack(file) {
     jsmediatags.read(file, {
       onSuccess(tag) {
         const t      = tag.tags;
-        const artist = t.artist || 'Unknown Artist';
+        const albumArtistTag = t.TPE2;
+        const albumArtist = albumArtistTag
+          ? (typeof albumArtistTag === 'object' ? albumArtistTag.data : albumArtistTag)
+          : null;
+        const artist = albumArtist || t.artist || 'Unknown Artist';
         const album  = t.album  || 'Unknown Album';
         const title  = t.title  || file.name;
         const track  = parseInt(t.track) || 999;
