@@ -286,6 +286,7 @@
 
   .album-info { padding: 0.75rem 0 0; }
   .hide-album-info .album-info { display: none; }
+  .small-album-title .album-title { font-size: var(--font-sm); }
 
   .album-title {
     font-family: var(--font-title);
@@ -1034,6 +1035,13 @@
         </label>
       </div>
       <div class="modal-row">
+        <span class="modal-label">Album Title Size</span>
+        <select class="modal-select" id="album-title-size-select">
+          <option value="default">Default</option>
+          <option value="small">Small</option>
+        </select>
+      </div>
+      <div class="modal-row">
         <span class="modal-label">Font Smoothing</span>
         <label class="toggle">
           <input type="checkbox" id="font-smoothing-toggle">
@@ -1145,6 +1153,7 @@ let titleFont   = localStorage.getItem('fm-title-font')   || 'system-ui, sans-se
 let bodyFont    = localStorage.getItem('fm-body-font')     || 'system-ui, sans-serif';
 let fontSmoothing = localStorage.getItem('fm-font-smoothing') === 'true';
 let showAlbumInfo = localStorage.getItem('fm-show-album-info') !== 'false';
+let albumTitleSize = localStorage.getItem('fm-album-title-size') || 'default';
 let uiScale = parseFloat(localStorage.getItem('fm-ui-scale')) || 1;
 
 const audioEl  = document.getElementById('audio-el');
@@ -1172,6 +1181,9 @@ const scanCnt  = document.getElementById('scan-count');
   }
   if (!showAlbumInfo) {
     document.documentElement.classList.add('hide-album-info');
+  }
+  if (albumTitleSize === 'small') {
+    document.documentElement.classList.add('small-album-title');
   }
   if (uiScale !== 1) {
     document.documentElement.style.fontSize = (16 * uiScale) + 'px';
@@ -1450,6 +1462,7 @@ function openAppearanceModal() {
   document.getElementById('title-font-select').value = titleFont;
   document.getElementById('body-font-select').value = bodyFont;
   document.getElementById('album-info-toggle').checked = showAlbumInfo;
+  document.getElementById('album-title-size-select').value = albumTitleSize;
   document.getElementById('font-smoothing-toggle').checked = fontSmoothing;
   document.getElementById('ui-scale-range').value = uiScale;
   document.getElementById('ui-scale-value').textContent = Math.round(uiScale * 100) + '%';
@@ -1494,6 +1507,13 @@ document.getElementById('album-info-toggle').addEventListener('change', e => {
   showAlbumInfo = e.target.checked;
   document.documentElement.classList.toggle('hide-album-info', !showAlbumInfo);
   localStorage.setItem('fm-show-album-info', showAlbumInfo);
+});
+
+// Album title size select
+document.getElementById('album-title-size-select').addEventListener('change', e => {
+  albumTitleSize = e.target.value;
+  document.documentElement.classList.toggle('small-album-title', albumTitleSize === 'small');
+  localStorage.setItem('fm-album-title-size', albumTitleSize);
 });
 
 // Font smoothing toggle
