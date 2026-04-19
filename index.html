@@ -984,7 +984,8 @@
           </svg>
         </button>
         <div class="menu-popover" id="menu-popover" role="menu" style="display:none">
-          <button class="menu-item" id="menu-pick-dir" role="menuitem">Open Directory</button>
+          <button class="menu-item" id="menu-pick-dir" role="menuitem">Open New Directory</button>
+          <button class="menu-item" id="menu-refresh-dir" role="menuitem">Refresh Directory</button>
           <button class="menu-item" id="menu-toggle-progress" role="menuitem">Switch Progress Bar Style</button>
           <button class="menu-item" id="menu-appearance" role="menuitem">Appearance Options…</button>
         </div>
@@ -1382,17 +1383,25 @@ loadGoogleFont(bodyFont);
 // so they can be stored in IndexedDB and restored across sessions. On reload
 // we check queryPermission() — if already granted we auto-scan; if not we
 // show a one-tap prompt that calls requestPermission() before scanning.
-const DB_NAME  = 'folder-fm-db';
-const DB_STORE = 'handles';
-const DB_KEY   = 'last-dir';
+const DB_NAME    = 'folder-fm-db';
+const DB_STORE   = 'handles';
+const META_STORE = 'track-metadata';
+const DB_KEY     = 'last-dir';
 
+let _dbPromise = null;
 function openDb() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore(DB_STORE);
+  if (_dbPromise) return _dbPromise;
+  _dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 2);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE))   db.createObjectStore(DB_STORE);
+      if (!db.objectStoreNames.contains(META_STORE)) db.createObjectStore(META_STORE);
+    };
     req.onsuccess = e => resolve(e.target.result);
-    req.onerror   = e => reject(e.target.error);
+    req.onerror   = e => { _dbPromise = null; reject(e.target.error); };
   });
+  return _dbPromise;
 }
 
 async function saveDirHandle(handle) {
@@ -1413,6 +1422,34 @@ async function loadDirHandle() {
       req.onerror   = e => reject(e.target.error);
     });
   } catch(e) { return null; }
+}
+
+async function getTrackMeta(pathKey) {
+  try {
+    const db = await openDb();
+    return await new Promise((resolve, reject) => {
+      const tx  = db.transaction(META_STORE, 'readonly');
+      const req = tx.objectStore(META_STORE).get(pathKey);
+      req.onsuccess = e => resolve(e.target.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  } catch(e) { return null; }
+}
+
+async function setTrackMeta(pathKey, entry) {
+  try {
+    const db = await openDb();
+    const tx = db.transaction(META_STORE, 'readwrite');
+    tx.objectStore(META_STORE).put(entry, pathKey);
+  } catch(e) {}
+}
+
+async function clearTrackMetaCache() {
+  try {
+    const db = await openDb();
+    const tx = db.transaction(META_STORE, 'readwrite');
+    tx.objectStore(META_STORE).clear();
+  } catch(e) {}
 }
 
 // ════════════════════════════════════════════════
@@ -1440,6 +1477,7 @@ async function openFolder() {
   // Show idle player while scanning
   playerEl.classList.add('idle');
 
+  await clearTrackMetaCache();
   await scanDir(dirHandle);
   renderAlbums();
 }
@@ -1472,6 +1510,29 @@ document.addEventListener('click', e => {
 document.getElementById('menu-pick-dir').addEventListener('click', () => {
   closeMenu();
   openFolder();
+});
+
+async function refreshDirectory() {
+  const handle = await loadDirHandle();
+  if (!handle) return;
+  const granted = await handle.requestPermission({ mode: 'read' });
+  if (granted !== 'granted') return;
+
+  albums = {};
+  gridEl.innerHTML = '';
+  gridEl.style.display = 'none';
+  emptyEl.style.display = 'none';
+  scanEl.style.display = 'flex';
+  scanCnt.textContent = '0';
+  playerEl.classList.add('idle');
+
+  await scanDir(handle);
+  renderAlbums();
+}
+
+document.getElementById('menu-refresh-dir').addEventListener('click', () => {
+  closeMenu();
+  refreshDirectory();
 });
 
 document.getElementById('menu-toggle-progress').addEventListener('click', () => {
@@ -1627,16 +1688,17 @@ window.addEventListener('load', async () => {
 // ════════════════════════════════════════════════
 // Recursive directory scan
 // ════════════════════════════════════════════════
-async function scanDir(dirHandle) {
+async function scanDir(dirHandle, pathPrefix = '') {
   for await (const entry of dirHandle.values()) {
     if (entry.kind === 'directory') {
-      await scanDir(entry);
+      await scanDir(entry, pathPrefix ? `${pathPrefix}/${entry.name}` : entry.name);
     } else if (entry.kind === 'file') {
       const name = entry.name.toLowerCase();
       if (name.endsWith('.mp3') || name.endsWith('.flac') || name.endsWith('.m4a') ||
           name.endsWith('.ogg') || name.endsWith('.wav')  || name.endsWith('.aac')) {
-        const file = await entry.getFile();
-        await processTrack(file);
+        const file    = await entry.getFile();
+        const pathKey = pathPrefix ? `${pathPrefix}/${entry.name}` : entry.name;
+        await processTrack(file, pathKey);
         scanCnt.textContent = Object.values(albums).reduce((a,b) => a + b.tracks.length, 0);
       }
     }
@@ -1646,13 +1708,31 @@ async function scanDir(dirHandle) {
 // ════════════════════════════════════════════════
 // Tag extraction & album grouping
 // ════════════════════════════════════════════════
-function processTrack(file) {
+function picToDataURL(pic) {
+  const bytes = new Uint8Array(pic.data);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return `data:${pic.format};base64,${btoa(binary)}`;
+}
+
+async function processTrack(file, pathKey) {
+  if (pathKey) {
+    const cached = await getTrackMeta(pathKey);
+    if (cached && cached.lastModified === file.lastModified) {
+      const key = `${cached.artist} — ${cached.album}`;
+      if (!albums[key]) albums[key] = { artist: cached.artist, album: cached.album, tracks: [], art: null };
+      albums[key].tracks.push({ file, title: cached.title, track: cached.track });
+      if (!albums[key].art && cached.art) albums[key].art = cached.art;
+      return;
+    }
+  }
+
   return new Promise(resolve => {
     jsmediatags.read(file, {
       onSuccess(tag) {
-        const t      = tag.tags;
+        const t              = tag.tags;
         const albumArtistTag = t.TPE2;
-        const albumArtist = albumArtistTag
+        const albumArtist    = albumArtistTag
           ? (typeof albumArtistTag === 'object' ? albumArtistTag.data : albumArtistTag)
           : null;
         const artist = albumArtist || t.artist || 'Unknown Artist';
@@ -1660,21 +1740,20 @@ function processTrack(file) {
         const title  = t.title  || file.name;
         const track  = parseInt(t.track) || 999;
         const key    = `${artist} — ${album}`;
+        const art    = t.picture ? picToDataURL(t.picture) : null;
 
         if (!albums[key]) albums[key] = { artist, album, tracks: [], art: null };
         albums[key].tracks.push({ file, title, track });
+        if (!albums[key].art && art) albums[key].art = art;
 
-        if (!albums[key].art && t.picture) {
-          const pic  = t.picture;
-          const blob = new Blob([new Uint8Array(pic.data)], { type: pic.format });
-          albums[key].art = URL.createObjectURL(blob);
-        }
+        if (pathKey) setTrackMeta(pathKey, { lastModified: file.lastModified, artist, album, title, track, art });
         resolve();
       },
       onError() {
         const key = 'Unknown Artist — Unknown Album';
         if (!albums[key]) albums[key] = { artist:'Unknown Artist', album:'Unknown Album', tracks:[], art:null };
         albums[key].tracks.push({ file, title: file.name, track: 999 });
+        if (pathKey) setTrackMeta(pathKey, { lastModified: file.lastModified, artist:'Unknown Artist', album:'Unknown Album', title: file.name, track: 999, art: null });
         resolve();
       }
     });
